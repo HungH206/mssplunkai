@@ -10,6 +10,8 @@ import {
   ClipboardTaskFilled,
   ChartMultipleRegular,
   ChartMultipleFilled,
+  PersonSettingsRegular,
+  PersonSettingsFilled,
   SettingsRegular,
   SettingsFilled,
   bundleIcon,
@@ -20,11 +22,13 @@ const PeopleIcon = bundleIcon(PeopleFilled, PeopleRegular);
 const BookIcon = bundleIcon(BookFilled, BookRegular);
 const ClipboardIcon = bundleIcon(ClipboardTaskFilled, ClipboardTaskRegular);
 const ChartIcon = bundleIcon(ChartMultipleFilled, ChartMultipleRegular);
+const AdminIcon = bundleIcon(PersonSettingsFilled, PersonSettingsRegular);
 const SettingsIcon = bundleIcon(SettingsFilled, SettingsRegular);
 
 export function Layout() {
   const navItems = [
     { to: '/', icon: HomeIcon, label: 'Dashboard', end: true },
+    { to: '/admin', icon: AdminIcon, label: 'Admin Setup' },
     { to: '/learners', icon: PeopleIcon, label: 'Learners' },
     { to: '/study-plans', icon: BookIcon, label: 'Study Plans' },
     { to: '/assessments', icon: ClipboardIcon, label: 'Assessments' },

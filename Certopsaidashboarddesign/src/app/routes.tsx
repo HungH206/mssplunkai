@@ -3,6 +3,7 @@ import { Layout } from "./components/Layout";
 import { Dashboard } from "./pages/Dashboard";
 import { Learners } from "./pages/Learners";
 import { StudyPlans } from "./pages/StudyPlans";
+import { AdminSetup } from "./pages/AdminSetup";
 import { Assessments } from "./pages/Assessments";
 import { ManagerInsights } from "./pages/ManagerInsights";
 import { Settings } from "./pages/Settings";
@@ -15,6 +16,7 @@ export const router = createBrowserRouter([
       { index: true, Component: Dashboard },
       { path: "learners", Component: Learners },
       { path: "study-plans", Component: StudyPlans },
+      { path: "admin", Component: AdminSetup },
       { path: "assessments", Component: Assessments },
       { path: "manager-insights", Component: ManagerInsights },
       { path: "settings", Component: Settings },
