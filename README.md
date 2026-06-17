@@ -307,3 +307,7 @@ Run the backend syntax check before starting the API:
 cd backend
 npm run check
 ```
+
+## License
+
+MIT License
