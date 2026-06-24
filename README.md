@@ -233,6 +233,7 @@ Metrics include:
 - Node.js
 - npm
 - Azure SQL Database
+- UIPath Cloud for Lab and Agent Monitoring
 - Optional: Gemini API key
 
 ### Database
