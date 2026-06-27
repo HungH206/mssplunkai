@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Card, Button } from '@fluentui/react-components';
 import {
   CheckmarkCircleRegular,
@@ -5,12 +6,43 @@ import {
   ClockRegular,
   BrainCircuitRegular,
 } from '@fluentui/react-icons';
-import { certificationData } from '../data/mockData';
+import { getStudyPlans, StudyPlan } from '../../services/api';
 
 export function StudyPlans() {
-  const { studyPlans } = certificationData;
+  const [studyPlans, setStudyPlans] = useState<StudyPlan[]>([]);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    getStudyPlans()
+      .then(setStudyPlans)
+      .catch((apiError) => setError(apiError.message));
+  }, []);
+
+  const totalHours = useMemo(
+    () =>
+      studyPlans.reduce(
+        (sum, plan) => sum + (plan.generated_plan.schedule ?? []).reduce((planSum, topic) => planSum + Number(topic.hours || 0), 0),
+        0,
+      ),
+    [studyPlans],
+  );
 
   const topicLabel = (count: number) => `${count} ${count === 1 ? 'topic' : 'topics'}`;
+
+  const topicStatus = (planProgress: number | undefined, index: number, total: number) => {
+    const progress = planProgress ?? 0;
+    const topicProgress = ((index + 1) / total) * 100;
+
+    if (progress >= topicProgress) return 'completed';
+    if (progress >= (index / total) * 100) return 'in-progress';
+    return 'not-started';
+  };
+
+  const weeksRemaining = (examDate?: string) => {
+    if (!examDate) return '-';
+    const remainingMs = new Date(examDate).getTime() - Date.now();
+    return String(Math.max(0, Math.ceil(remainingMs / (7 * 24 * 60 * 60 * 1000))));
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -65,27 +97,38 @@ export function StudyPlans() {
               <div className="grid gap-3 text-sm sm:grid-cols-3 sm:gap-6">
                 <div>
                   <span className="block opacity-75">Plans Generated</span>
-                  <span className="font-semibold">98</span>
+                  <span className="font-semibold">{studyPlans.length}</span>
                 </div>
                 <div>
                   <span className="block opacity-75">Success Rate</span>
-                  <span className="font-semibold">91%</span>
+                  <span className="font-semibold">Live</span>
                 </div>
                 <div>
                   <span className="block opacity-75">Avg Time Saved</span>
-                  <span className="font-semibold">23 hours</span>
+                  <span className="font-semibold">{totalHours} planned hours</span>
                 </div>
               </div>
             </div>
           </div>
         </Card>
 
+        {error && (
+          <Card className="border border-[#fde7e9] bg-white p-4 text-sm text-[#d13438]">
+            {error}
+          </Card>
+        )}
+
         {/* Study Plans */}
         {studyPlans.map((plan) => {
-          const completedTopics = plan.topics.filter((topic) => topic.status === 'completed').length;
-          const inProgressTopics = plan.topics.filter((topic) => topic.status === 'in-progress').length;
-          const notStartedTopics = plan.topics.filter((topic) => topic.status === 'not-started').length;
-          const completion = Math.round((completedTopics / plan.topics.length) * 100);
+          const topics = plan.generated_plan.schedule ?? [];
+          const topicsWithStatus = topics.map((topic, index) => ({
+            ...topic,
+            status: topicStatus(plan.progress, index, topics.length),
+          }));
+          const completedTopics = topicsWithStatus.filter((topic) => topic.status === 'completed').length;
+          const inProgressTopics = topicsWithStatus.filter((topic) => topic.status === 'in-progress').length;
+          const notStartedTopics = topicsWithStatus.filter((topic) => topic.status === 'not-started').length;
+          const completion = topics.length ? Math.round((completedTopics / topics.length) * 100) : 0;
 
           return (
             <Card key={plan.id} className="bg-white border border-[#edebe9] rounded-lg p-5 shadow-sm sm:p-6">
@@ -93,21 +136,21 @@ export function StudyPlans() {
               <div className="mb-6 flex flex-col gap-4 border-b border-[#edebe9] pb-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0 flex-1">
                   <div className="mb-2 flex flex-wrap items-center gap-3">
-                    <h3 className="text-lg font-semibold text-[#323130]">{plan.certification}</h3>
+                    <h3 className="text-lg font-semibold text-[#323130]">{plan.course_name ?? 'Certification plan'}</h3>
                     <span className="inline-flex rounded-full bg-[#e1dfdd] px-3 py-1 text-xs font-medium text-[#323130]">
                       AI Generated
                     </span>
                   </div>
                   <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-[#605e5c]">
                     <div>
-                      <span className="font-medium">Learner:</span> {plan.learner}
+                      <span className="font-medium">Learner:</span> {plan.full_name}
                     </div>
                     <div>
-                      <span className="font-medium">Created:</span> {plan.created}
+                      <span className="font-medium">Created:</span> {new Date(plan.created_at).toLocaleDateString()}
                     </div>
                     <div className="flex items-center gap-1">
                       <ClockRegular className="w-4 h-4" />
-                      <span className="font-medium">{plan.weeksRemaining} weeks remaining</span>
+                      <span className="font-medium">{weeksRemaining(plan.exam_date)} weeks remaining</span>
                     </div>
                   </div>
                 </div>
@@ -119,7 +162,7 @@ export function StudyPlans() {
               {/* Topics List */}
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-[#605e5c] mb-3">Learning Topics</h4>
-                {plan.topics.map((topic, index) => (
+                {topicsWithStatus.map((topic, index) => (
                   <div
                     key={index}
                     className="flex flex-col gap-3 rounded-lg border border-[#edebe9] p-4 transition-colors hover:bg-[#faf9f8] sm:flex-row sm:items-center sm:gap-4"
@@ -130,7 +173,7 @@ export function StudyPlans() {
                     <div className="min-w-0 flex-1">
                       <div className="mb-1 flex flex-wrap items-center gap-2 sm:gap-3">
                         <span className="sm:hidden">{getStatusIcon(topic.status)}</span>
-                        <h5 className="text-sm font-medium text-[#323130]">{topic.name}</h5>
+                        <h5 className="text-sm font-medium text-[#323130]">Week {topic.week}: {topic.focus}</h5>
                         <span className={`inline-flex rounded px-2 py-0.5 text-xs font-medium capitalize ${getStatusColor(topic.status)}`}>
                           {topic.status.replace('-', ' ')}
                         </span>
@@ -198,11 +241,14 @@ export function StudyPlans() {
           <h2 className="text-lg font-semibold text-[#323130] mb-4">Recent Study Plans</h2>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 xl:gap-6">
             {[
-              { learner: 'Michael Chen', cert: 'Azure Administrator', progress: 72 },
-              { learner: 'Emily Rodriguez', cert: 'Kubernetes CKA', progress: 58 },
-              { learner: 'David Park', cert: 'GCP Professional', progress: 88 },
-            ].map((item, index) => (
-              <Card key={index} className="p-5 bg-white border border-[#edebe9] rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              ...studyPlans.slice(0, 3).map((plan) => ({
+                learner: plan.full_name,
+                cert: plan.course_name ?? 'Certification plan',
+                progress: plan.progress ?? 0,
+                id: plan.id,
+              })),
+            ].map((item) => (
+              <Card key={item.id} className="p-5 bg-white border border-[#edebe9] rounded-lg shadow-sm hover:shadow-md transition-shadow">
                 <div className="mb-4">
                   <h4 className="text-sm font-semibold text-[#323130] mb-1">{item.cert}</h4>
                   <p className="text-xs text-[#605e5c]">{item.learner}</p>

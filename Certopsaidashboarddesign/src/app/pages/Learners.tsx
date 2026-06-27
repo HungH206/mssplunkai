@@ -1,9 +1,27 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Card, Button, Input } from '@fluentui/react-components';
 import { AddRegular, EyeRegular, SearchRegular, FilterRegular } from '@fluentui/react-icons';
-import { certificationData } from '../data/mockData';
+import { CertificationCase, getCases } from '../../services/api';
 
 export function Learners() {
-  const { learners } = certificationData;
+  const [cases, setCases] = useState<CertificationCase[]>([]);
+  const [query, setQuery] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    getCases()
+      .then(setCases)
+      .catch((apiError) => setError(apiError.message));
+  }, []);
+
+  const learners = useMemo(
+    () =>
+      cases.filter((certificationCase) => {
+        const text = `${certificationCase.full_name} ${certificationCase.email} ${certificationCase.course_name}`.toLowerCase();
+        return text.includes(query.toLowerCase());
+      }),
+    [cases, query],
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -42,6 +60,8 @@ export function Learners() {
               <Input
                 placeholder="Search learners by name, email, or certification..."
                 className="w-full pl-10"
+                value={query}
+                onChange={(_, data) => setQuery(data.value)}
               />
             </div>
             <Button icon={<FilterRegular />} appearance="secondary" className="md:flex-shrink-0">
@@ -49,6 +69,12 @@ export function Learners() {
             </Button>
           </div>
         </Card>
+
+        {error && (
+          <Card className="mb-6 border border-[#fde7e9] bg-white p-4 text-sm text-[#d13438]">
+            {error}
+          </Card>
+        )}
 
         {/* Learners Table */}
         <Card className="overflow-hidden bg-white border border-[#edebe9] rounded-lg shadow-sm">
@@ -81,15 +107,15 @@ export function Learners() {
                   <tr key={learner.id} className="border-b border-[#f3f2f1] hover:bg-[#faf9f8]">
                     <td className="py-4 px-4">
                       <div className="min-w-0">
-                        <div className="truncate text-sm font-medium text-[#323130]">{learner.name}</div>
+                        <div className="truncate text-sm font-medium text-[#323130]">{learner.full_name}</div>
                         <div className="truncate text-xs text-[#605e5c]">{learner.email}</div>
                       </div>
                     </td>
                     <td className="py-4 px-4 text-sm text-[#605e5c]">
-                      <span className="line-clamp-2">{learner.team}</span>
+                      <span className="line-clamp-2">{learner.team_name ?? 'Unassigned'}</span>
                     </td>
                     <td className="py-4 px-4 text-sm text-[#323130]">
-                      <span className="line-clamp-2">{learner.currentCert}</span>
+                      <span className="line-clamp-2">{learner.course_name}</span>
                     </td>
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-3">
@@ -122,7 +148,7 @@ export function Learners() {
                         </div>
                       </div>
                     </td>
-                    <td className="py-4 px-4 text-sm text-[#605e5c]">{learner.examDate}</td>
+                    <td className="py-4 px-4 text-sm text-[#605e5c]">{learner.exam_date ?? 'No date'}</td>
                     <td className="py-4 px-4">
                       <span className={`inline-flex whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium ${getStatusColor(learner.status)}`}>
                         {learner.status}

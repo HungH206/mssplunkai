@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Card, Button } from '@fluentui/react-components';
 import {
   ClipboardTaskRegular,
@@ -6,28 +7,37 @@ import {
   ChevronRightRegular,
 } from '@fluentui/react-icons';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
-import { certificationData } from '../data/mockData';
+import { AssessmentResult, getAssessments } from '../../services/api';
 
 export function Assessments() {
-  const { assessments } = certificationData;
+  const [assessments, setAssessments] = useState<AssessmentResult[]>([]);
+  const [error, setError] = useState('');
 
-  const skillRadarData = [
-    { subject: 'Networking', score: 78 },
-    { subject: 'Security', score: 65 },
-    { subject: 'Compute', score: 82 },
-    { subject: 'Storage', score: 71 },
-    { subject: 'Database', score: 68 },
-    { subject: 'DevOps', score: 75 },
-  ];
+  useEffect(() => {
+    getAssessments()
+      .then(setAssessments)
+      .catch((apiError) => setError(apiError.message));
+  }, []);
 
-  const assessmentScores = [
-    { name: 'Practice 1', score: 62 },
-    { name: 'Practice 2', score: 68 },
-    { name: 'Practice 3', score: 73 },
-    { name: 'Practice 4', score: 71 },
-    { name: 'Practice 5', score: 78 },
-    { name: 'Practice 6', score: 82 },
-  ];
+  const assessmentScores = useMemo(
+    () =>
+      assessments.slice(0, 6).reverse().map((assessment, index) => ({
+        name: `Assessment ${index + 1}`,
+        score: assessment.score ?? 0,
+      })),
+    [assessments],
+  );
+
+  const skillRadarData = useMemo(
+    () =>
+      assessments.slice(0, 6).map((assessment) => ({
+        subject: assessment.course_name.length > 16 ? `${assessment.course_name.slice(0, 16)}...` : assessment.course_name,
+        score: assessment.score ?? 0,
+      })),
+    [assessments],
+  );
+
+  const latestScore = assessments[0]?.score ?? 0;
 
   return (
     <div className="h-full overflow-auto bg-[#faf9f8]">
@@ -60,7 +70,7 @@ export function Assessments() {
               <div className="flex gap-6 text-sm">
                 <div>
                   <span className="opacity-75">Assessments Completed:</span>
-                  <span className="font-semibold ml-2">215</span>
+                  <span className="font-semibold ml-2">{assessments.length}</span>
                 </div>
                 <div>
                   <span className="opacity-75">Avg Accuracy:</span>
@@ -74,6 +84,12 @@ export function Assessments() {
             </div>
           </div>
         </Card>
+
+        {error && (
+          <Card className="border border-[#fde7e9] bg-white p-4 text-sm text-[#d13438]">
+            {error}
+          </Card>
+        )}
 
         {/* Charts */}
         <div className="grid grid-cols-2 gap-6">
@@ -98,7 +114,7 @@ export function Assessments() {
             </ResponsiveContainer>
             <div className="mt-4 flex items-center justify-between text-sm">
               <span className="text-[#605e5c]">Latest Score:</span>
-              <span className="text-xl font-semibold text-[#107c10]">82%</span>
+              <span className="text-xl font-semibold text-[#107c10]">{latestScore}%</span>
             </div>
           </Card>
 
@@ -139,45 +155,45 @@ export function Assessments() {
         <div>
           <h2 className="text-lg font-semibold text-[#323130] mb-4">Individual Readiness Scores</h2>
           <div className="grid grid-cols-4 gap-4">
-            {[
-              { name: 'Michael Chen', cert: 'Azure Admin', score: 82, status: 'Ready' },
-              { name: 'Sarah Johnson', cert: 'AWS SA', score: 68, status: 'In Progress' },
-              { name: 'Emily Rodriguez', cert: 'K8s CKA', score: 71, status: 'In Progress' },
-              { name: 'David Park', cert: 'GCP Pro', score: 91, status: 'Ready' },
-            ].map((learner, index) => (
-              <Card key={index} className="p-5 bg-white border border-[#edebe9] rounded-lg shadow-sm">
+            {assessments.slice(0, 4).map((assessment) => {
+              const score = assessment.score ?? 0;
+              const status = score >= 80 ? 'Ready' : 'In Progress';
+
+              return (
+              <Card key={assessment.id} className="p-5 bg-white border border-[#edebe9] rounded-lg shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-12 h-12 bg-[#0078d4] rounded-full flex items-center justify-center text-white font-semibold">
-                    {learner.name.split(' ').map(n => n[0]).join('')}
+                    {assessment.full_name.split(' ').map(n => n[0]).join('')}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-semibold text-[#323130] truncate">{learner.name}</h4>
-                    <p className="text-xs text-[#605e5c] truncate">{learner.cert}</p>
+                    <h4 className="text-sm font-semibold text-[#323130] truncate">{assessment.full_name}</h4>
+                    <p className="text-xs text-[#605e5c] truncate">{assessment.course_name}</p>
                   </div>
                 </div>
                 <div className="relative">
                   <div className="w-full h-2 bg-[#e1dfdd] rounded-full">
                     <div
-                      className={`h-2 rounded-full ${learner.score >= 80 ? 'bg-[#107c10]' : 'bg-[#0078d4]'}`}
-                      style={{ width: `${learner.score}%` }}
+                      className={`h-2 rounded-full ${score >= 80 ? 'bg-[#107c10]' : 'bg-[#0078d4]'}`}
+                      style={{ width: `${score}%` }}
                     />
                   </div>
                   <div className="flex items-center justify-between mt-2">
                     <span className="text-xs text-[#605e5c]">Readiness</span>
-                    <span className={`text-lg font-semibold ${learner.score >= 80 ? 'text-[#107c10]' : 'text-[#0078d4]'}`}>
-                      {learner.score}%
+                    <span className={`text-lg font-semibold ${score >= 80 ? 'text-[#107c10]' : 'text-[#0078d4]'}`}>
+                      {score}%
                     </span>
                   </div>
                 </div>
                 <div className="mt-3">
                   <span className={`inline-flex w-full justify-center px-3 py-1 rounded-full text-xs font-medium ${
-                    learner.status === 'Ready' ? 'bg-[#dff6dd] text-[#107c10]' : 'bg-[#cfe4ff] text-[#004578]'
+                    status === 'Ready' ? 'bg-[#dff6dd] text-[#107c10]' : 'bg-[#cfe4ff] text-[#004578]'
                   }`}>
-                    {learner.status}
+                    {status}
                   </span>
                 </div>
               </Card>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -197,13 +213,13 @@ export function Assessments() {
               >
                 <div className="flex-shrink-0">
                   <div className={`w-16 h-16 rounded-lg flex items-center justify-center ${
-                    assessment.score >= 80 ? 'bg-[#dff6dd]' : assessment.score >= 70 ? 'bg-[#cfe4ff]' : 'bg-[#fff4ce]'
+                    (assessment.score ?? 0) >= 80 ? 'bg-[#dff6dd]' : (assessment.score ?? 0) >= 70 ? 'bg-[#cfe4ff]' : 'bg-[#fff4ce]'
                   }`}>
                     <div className="text-center">
                       <div className={`text-2xl font-bold ${
-                        assessment.score >= 80 ? 'text-[#107c10]' : assessment.score >= 70 ? 'text-[#0078d4]' : 'text-[#8a6116]'
+                        (assessment.score ?? 0) >= 80 ? 'text-[#107c10]' : (assessment.score ?? 0) >= 70 ? 'text-[#0078d4]' : 'text-[#8a6116]'
                       }`}>
-                        {assessment.score}
+                        {assessment.score ?? 0}
                       </div>
                       <div className="text-xs text-[#605e5c]">Score</div>
                     </div>
@@ -211,15 +227,15 @@ export function Assessments() {
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <h4 className="text-sm font-semibold text-[#323130]">{assessment.learner}</h4>
+                    <h4 className="text-sm font-semibold text-[#323130]">{assessment.full_name}</h4>
                     <span className="text-xs text-[#605e5c]">•</span>
-                    <span className="text-xs text-[#605e5c]">{assessment.certification}</span>
+                    <span className="text-xs text-[#605e5c]">{assessment.course_name}</span>
                   </div>
-                  <p className="text-xs text-[#605e5c] mb-2">{assessment.type} • {assessment.date}</p>
+                  <p className="text-xs text-[#605e5c] mb-2">AI assessment • {new Date(assessment.created_at).toLocaleDateString()}</p>
                   <div className="flex items-start gap-2">
                     <BrainCircuitRegular className="w-4 h-4 text-[#8764b8] mt-0.5 flex-shrink-0" />
                     <p className="text-xs text-[#323130]">
-                      <span className="font-medium">AI Recommendation:</span> {assessment.aiRecommendation}
+                      <span className="font-medium">AI Recommendation:</span> {assessment.readiness ?? 'Review weak areas and continue practice.'}
                     </p>
                   </div>
                 </div>

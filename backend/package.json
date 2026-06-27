@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "check": "node --check src/server.js && node --check src/services/sql.js && node --check src/services/gemini.js && node --check src/agents/learningAgent.js && node --check src/agents/plannerAgent.js && node --check src/agents/assessmentAgent.js && node --check src/agents/insightsAgent.js && node --check src/routes/teams.js && node --check src/routes/learners.js && node --check src/routes/courses.js && node --check src/routes/assignments.js && node --check src/routes/plans.js && node --check src/routes/assessments.js && node --check src/routes/insights.js"
+    "check": "node --check src/server.js && node --check src/services/sql.js && node --check src/services/gemini.js && node --check src/agents/learningAgent.js && node --check src/agents/plannerAgent.js && node --check src/agents/assessmentAgent.js && node --check src/agents/insightsAgent.js && node --check src/routes/teams.js && node --check src/routes/learners.js && node --check src/routes/courses.js && node --check src/routes/assignments.js && node --check src/routes/cases.js && node --check src/routes/plans.js && node --check src/routes/assessments.js && node --check src/routes/insights.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

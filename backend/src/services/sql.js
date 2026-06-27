@@ -32,7 +32,11 @@ async function query(queryText, params = {}) {
   const request = pool.request();
 
   for (const [name, value] of Object.entries(params)) {
-    request.input(name, value);
+    if (value && typeof value === 'object' && 'type' in value) {
+      request.input(name, value.type, value.value);
+    } else {
+      request.input(name, value);
+    }
   }
 
   const result = await request.query(queryText);

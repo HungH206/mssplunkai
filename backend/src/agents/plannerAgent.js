@@ -7,6 +7,7 @@ async function generateStudyPlan({ learnerCourseId }) {
       SELECT
         lc.id AS learner_course_id,
         l.id AS learner_id,
+        cc.id AS certification_case_id,
         l.full_name,
         c.name AS course_name,
         lc.progress,
@@ -19,6 +20,7 @@ async function generateStudyPlan({ learnerCourseId }) {
       FROM LearnerCourses lc
       JOIN Learners l ON l.id = lc.learner_id
       JOIN CertificateCourses c ON c.id = lc.course_id
+      LEFT JOIN CertificationCases cc ON cc.learner_id = l.id AND cc.course_id = c.id
       LEFT JOIN LearnerAvailability la ON la.learner_id = l.id
       WHERE lc.id = @learnerCourseId
     `,
@@ -65,13 +67,14 @@ JSON shape: {"schedule":[{"week":1,"focus":"topic","hours":4}],"workIq":{"meetin
 
   const saved = await query(
     `
-      INSERT INTO StudyPlans (learner_id, learner_course_id, generated_plan)
+      INSERT INTO StudyPlans (learner_id, learner_course_id, certification_case_id, generated_plan)
       OUTPUT inserted.id
-      VALUES (@learnerId, @learnerCourseId, @generatedPlan)
+      VALUES (@learnerId, @learnerCourseId, @certificationCaseId, @generatedPlan)
     `,
     {
       learnerId: { type: sql.Int, value: context.learner_id },
       learnerCourseId: { type: sql.Int, value: learnerCourseId },
+      certificationCaseId: { type: sql.Int, value: context.certification_case_id || null },
       generatedPlan: { type: sql.NVarChar(sql.MAX), value: JSON.stringify(plan) },
     },
   );

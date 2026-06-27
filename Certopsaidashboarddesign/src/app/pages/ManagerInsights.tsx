@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Card, Button } from '@fluentui/react-components';
 import { BrainCircuitRegular, ArrowDownloadRegular, ShareRegular } from '@fluentui/react-icons';
 import {
@@ -5,10 +6,14 @@ import {
   Tooltip, Legend, ResponsiveContainer, ScatterChart, Scatter,
   ZAxis, PieChart, Pie, Cell,
 } from 'recharts';
-import { certificationData } from '../data/mockData';
+import { DashboardData, getDashboard } from '../../services/api';
 
 export function ManagerInsights() {
-  const { teamReadiness } = certificationData;
+  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+
+  useEffect(() => {
+    getDashboard().then(setDashboard).catch(() => setDashboard(null));
+  }, []);
 
   const roiData = [
     { month: 'Jan', investment: 45000, productivity: 52000 },
@@ -27,13 +32,16 @@ export function ManagerInsights() {
     { team: 'Data Eng', traditional: 13, aiPowered: 8 },
   ];
 
-  const teamPerformanceData = [
-    { team: 'Engineering', readiness: 82, engagement: 88, size: 85 },
-    { team: 'DevOps', readiness: 78, engagement: 85, size: 42 },
-    { team: 'Cloud', readiness: 71, engagement: 72, size: 38 },
-    { team: 'Security', readiness: 85, engagement: 91, size: 32 },
-    { team: 'Data', readiness: 69, engagement: 75, size: 50 },
-  ];
+  const teamPerformanceData = useMemo(
+    () =>
+      (dashboard?.teamReadiness ?? []).map((team) => ({
+        team: team.team,
+        readiness: team.readiness,
+        engagement: Math.min(100, Math.max(40, team.readiness + 8 - team.highRisk * 4)),
+        size: team.learners,
+      })),
+    [dashboard],
+  );
 
   return (
     <div className="h-full overflow-auto bg-[#faf9f8]">

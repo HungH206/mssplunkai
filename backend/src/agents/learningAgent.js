@@ -8,12 +8,14 @@ async function generateLearningPlan({ learnerId, courseId }) {
         l.id AS learner_id,
         l.full_name,
         c.id AS course_id,
+        cc.id AS certification_case_id,
         c.name AS course_name,
         c.provider,
         c.level,
         c.duration_weeks
       FROM Learners l
       CROSS JOIN CertificateCourses c
+      LEFT JOIN CertificationCases cc ON cc.learner_id = l.id AND cc.course_id = c.id
       WHERE l.id = @learnerId AND c.id = @courseId
     `,
     {
@@ -47,13 +49,14 @@ JSON shape: {"skills":["skill"],"estimatedHours":20}`,
 
   const saved = await query(
     `
-      INSERT INTO LearningPlans (learner_id, course_id, generated_plan, estimated_hours)
+      INSERT INTO LearningPlans (learner_id, course_id, certification_case_id, generated_plan, estimated_hours)
       OUTPUT inserted.id
-      VALUES (@learnerId, @courseId, @generatedPlan, @estimatedHours)
+      VALUES (@learnerId, @courseId, @certificationCaseId, @generatedPlan, @estimatedHours)
     `,
     {
       learnerId: { type: sql.Int, value: learnerId },
       courseId: { type: sql.Int, value: courseId },
+      certificationCaseId: { type: sql.Int, value: context.certification_case_id || null },
       generatedPlan: { type: sql.NVarChar(sql.MAX), value: JSON.stringify(plan) },
       estimatedHours: { type: sql.Int, value: plan.estimatedHours || null },
     },

@@ -8,11 +8,13 @@ async function generateAssessment({ learnerId, courseId }) {
         l.id AS learner_id,
         l.full_name,
         c.id AS course_id,
+        cc.id AS certification_case_id,
         c.name AS course_name,
         c.provider,
         c.level
       FROM Learners l
       CROSS JOIN CertificateCourses c
+      LEFT JOIN CertificationCases cc ON cc.learner_id = l.id AND cc.course_id = c.id
       WHERE l.id = @learnerId AND c.id = @courseId
     `,
     {
@@ -49,13 +51,14 @@ JSON shape: {"questions":[{"question":"text","answer":"text"}],"score":72,"readi
 
   const saved = await query(
     `
-      INSERT INTO AssessmentResults (learner_id, course_id, questions_json, score, readiness)
+      INSERT INTO AssessmentResults (learner_id, course_id, certification_case_id, questions_json, score, readiness)
       OUTPUT inserted.id
-      VALUES (@learnerId, @courseId, @questionsJson, @score, @readiness)
+      VALUES (@learnerId, @courseId, @certificationCaseId, @questionsJson, @score, @readiness)
     `,
     {
       learnerId: { type: sql.Int, value: learnerId },
       courseId: { type: sql.Int, value: courseId },
+      certificationCaseId: { type: sql.Int, value: context.certification_case_id || null },
       questionsJson: { type: sql.NVarChar(sql.MAX), value: JSON.stringify(assessment.questions || []) },
       score: { type: sql.Int, value: assessment.score || null },
       readiness: { type: sql.NVarChar(50), value: assessment.readiness || null },
