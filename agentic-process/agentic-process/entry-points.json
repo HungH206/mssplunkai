@@ -1,0 +1,67 @@
+{
+  "$schema": "https://cloud.uipath.com/draft/2024-12/entry-point",
+  "$id": "entry-points.json",
+  "entryPoints": [
+    {
+      "filePath": "/content/agentic-process.bpmn#start_event",
+      "uniqueId": "9271c647-aa5f-4a25-8183-913c3e35f543",
+      "type": "processorchestration",
+      "input": {
+        "type": "object",
+        "properties": {
+          "caseId": {
+            "type": "string"
+          },
+          "learnerId": {
+            "type": "string"
+          },
+          "certificationId": {
+            "type": "string"
+          },
+          "certificationName": {
+            "type": "string"
+          },
+          "learnerProfile": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "targetExamDate": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "caseId",
+          "learnerId",
+          "certificationId",
+          "certificationName"
+        ]
+      },
+      "output": {
+        "type": "object",
+        "properties": {
+          "learningPath": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "studyPlan": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "assessmentResult": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "riskEvaluation": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "coachingPlan": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "displayName": "Manual trigger"
+    }
+  ]
+}

@@ -81,6 +81,45 @@ BEGIN
     ON CertificationCases (learner_id, course_id);
 END;
 
+IF OBJECT_ID('AgentRuns', 'U') IS NULL
+BEGIN
+  CREATE TABLE AgentRuns (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    certification_case_id INT NOT NULL,
+    uipath_job_id NVARCHAR(80) NULL,
+    uipath_job_key NVARCHAR(80) NULL,
+    process_key NVARCHAR(160) NULL,
+    release_key NVARCHAR(80) NULL,
+    status NVARCHAR(50) NOT NULL DEFAULT 'Pending',
+    input_json NVARCHAR(MAX) NOT NULL,
+    output_json NVARCHAR(MAX) NULL,
+    error_message NVARCHAR(MAX) NULL,
+    started_at DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    completed_at DATETIME2 NULL,
+    updated_at DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+
+    CONSTRAINT FK_AgentRuns_CertificationCases
+      FOREIGN KEY (certification_case_id) REFERENCES CertificationCases(id),
+
+    CONSTRAINT CK_AgentRuns_InputJson_IsJson
+      CHECK (ISJSON(input_json) = 1),
+
+    CONSTRAINT CK_AgentRuns_OutputJson_IsJson
+      CHECK (output_json IS NULL OR ISJSON(output_json) = 1)
+  );
+END;
+
+IF NOT EXISTS (
+  SELECT 1
+  FROM sys.indexes
+  WHERE name = 'IX_AgentRuns_CertificationCase'
+    AND object_id = OBJECT_ID('AgentRuns')
+)
+BEGIN
+  CREATE INDEX IX_AgentRuns_CertificationCase
+    ON AgentRuns (certification_case_id, started_at DESC);
+END;
+
 IF OBJECT_ID('StudyPlans', 'U') IS NULL
 BEGIN
   CREATE TABLE StudyPlans (

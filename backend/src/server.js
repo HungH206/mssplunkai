@@ -10,6 +10,7 @@ const casesRouter = require('./routes/cases');
 const plansRouter = require('./routes/plans');
 const assessmentsRouter = require('./routes/assessments');
 const insightsRouter = require('./routes/insights');
+const persistenceRouter = require('./routes/persistence');
 
 const app = express();
 const port = Number(process.env.PORT || 4000);
@@ -26,6 +27,7 @@ app.use('/api/learners', learnersRouter);
 app.use('/api/courses', coursesRouter);
 app.use('/api/assignments', assignmentsRouter);
 app.use('/api/cases', casesRouter);
+app.use('/api/persistence', persistenceRouter);
 app.use('/api/plans', plansRouter);
 app.use('/api/assessments', assessmentsRouter);
 app.use('/api/insights', insightsRouter);
