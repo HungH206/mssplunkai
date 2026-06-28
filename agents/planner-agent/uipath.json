@@ -12,5 +12,7 @@
     "includeUvLock": true
   },
   "functions": {},
-  "agents": {}
+  "agents": {
+    "agent": "main.py:main"
+  }
 }

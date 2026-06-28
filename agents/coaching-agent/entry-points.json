@@ -1,5 +1,115 @@
 {
     "$schema": "https://cloud.uipath.com/draft/2024-12/entry-point",
     "$id": "entry-points.json",
-    "entryPoints": []
+    "entryPoints": [
+        {
+            "filePath": "agent",
+            "uniqueId": "76044acd-a78e-4c6f-b792-adfc724cadc9",
+            "type": "agent",
+            "input": {
+                "type": "object",
+                "properties": {
+                    "learnerId": {
+                        "title": "Learnerid",
+                        "type": "string"
+                    },
+                    "certificationId": {
+                        "title": "Certificationid",
+                        "type": "string"
+                    },
+                    "certificationName": {
+                        "title": "Certificationname",
+                        "type": "string"
+                    },
+                    "learnerProfile": {
+                        "additionalProperties": true,
+                        "title": "Learnerprofile",
+                        "type": "object"
+                    },
+                    "assessmentResult": {
+                        "additionalProperties": true,
+                        "title": "Assessmentresult",
+                        "type": "object"
+                    },
+                    "studyPlan": {
+                        "additionalProperties": true,
+                        "title": "Studyplan",
+                        "type": "object"
+                    },
+                    "riskEvaluation": {
+                        "additionalProperties": true,
+                        "title": "Riskevaluation",
+                        "type": "object"
+                    },
+                    "managerFeedback": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "learnerId",
+                    "certificationId",
+                    "certificationName",
+                    "assessmentResult",
+                    "studyPlan",
+                    "riskEvaluation"
+                ],
+                "title": "Input"
+            },
+            "output": {
+                "type": "object",
+                "properties": {
+                    "learnerId": {
+                        "title": "Learnerid",
+                        "type": "string"
+                    },
+                    "certificationId": {
+                        "title": "Certificationid",
+                        "type": "string"
+                    },
+                    "coachingPlan": {
+                        "additionalProperties": true,
+                        "title": "Coachingplan",
+                        "type": "object"
+                    },
+                    "generatedAt": {
+                        "title": "Generatedat",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "learnerId",
+                    "certificationId",
+                    "coachingPlan",
+                    "generatedAt"
+                ],
+                "title": "Output"
+            },
+            "graph": {
+                "nodes": [
+                    {
+                        "id": "main.py:93",
+                        "name": "main",
+                        "type": "function",
+                        "metadata": {
+                            "file": "main.py"
+                        }
+                    },
+                    {
+                        "id": "main.py:28",
+                        "name": "_parse_date",
+                        "type": "function",
+                        "metadata": {
+                            "file": "main.py"
+                        }
+                    }
+                ],
+                "edges": [
+                    {
+                        "source": "main.py:93",
+                        "target": "main.py:28"
+                    }
+                ]
+            }
+        }
+    ]
 }

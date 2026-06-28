@@ -1,138 +1,81 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
 from typing import Any
-from typing_extensions import TypedDict
 
-from langgraph.graph import END, START, StateGraph
-
-try:
-    from uipath.tracing import traced
-except ImportError:
-    def traced(*_args: Any, **_kwargs: Any):
-        def decorator(func):
-            return func
-
-        return decorator
+from pydantic import BaseModel, Field
 
 
-class LearningAgentState(TypedDict, total=False):
-    learnerId: int
-    courseId: int
-    learnerName: str
-    role: str
-    certificationTarget: str
-    provider: str
-    level: str
-    durationWeeks: int
-    skillHistory: list[str]
-    bpmnContext: dict[str, Any]
+class Input(BaseModel):
+    learnerId: str
+    certificationId: str
+    certificationName: str
+    learnerProfile: dict[str, Any] = Field(default_factory=dict)
+
+
+class Output(BaseModel):
+    learnerId: str
+    certificationId: str
     learningPath: dict[str, Any]
+    generatedAt: str
 
 
-@dataclass
-class LearningModule:
-    title: str
-    objective: str
-    estimatedHours: int
-    resources: list[str] = field(default_factory=list)
+def _experience_level(profile: dict[str, Any]) -> str:
+    return str(profile.get("experienceLevel") or "intermediate").lower()
 
 
-@dataclass
-class LearningPath:
-    learnerId: int
-    courseId: int
-    certificationTarget: str
-    requiredSkills: list[str]
-    modules: list[LearningModule]
-    estimatedHours: int
-    checkpoints: list[str]
-    nextAgent: str = "study-planner-agent"
+def _module_hours(level: str) -> list[int]:
+    if level == "beginner":
+        return [4, 5, 5, 4, 3]
+    if level == "advanced":
+        return [2, 3, 4, 4]
+    return [3, 4, 4, 3, 2]
 
 
-def _as_int(value: Any, default: int) -> int:
-    try:
-        return int(value)
-    except (TypeError, ValueError):
-        return default
-
-
-def _certification_name(state: LearningAgentState) -> str:
-    return (
-        state.get("certificationTarget")
-        or state.get("bpmnContext", {}).get("certificationTarget")
-        or f"Course {state.get('courseId', 'Unknown')}"
-    )
-
-
-def _required_skills(state: LearningAgentState) -> list[str]:
-    target = _certification_name(state)
-    history = {skill.strip().lower() for skill in state.get("skillHistory", []) if skill.strip()}
-
-    baseline = [
-        f"{target} foundations",
-        "Core platform concepts",
+def _skills(certification_name: str) -> list[str]:
+    return [
+        f"{certification_name} foundations",
+        "Core service concepts",
         "Hands-on implementation",
         "Monitoring and troubleshooting",
-        "Practice assessment review",
+        "Practice exam review",
     ]
 
-    return [skill for skill in baseline if skill.lower() not in history][:5]
 
+def main(input_data: Input) -> Output:
+    level = _experience_level(input_data.learnerProfile)
+    skills = _skills(input_data.certificationName)
+    hours = _module_hours(level)
 
-@traced(name="build_learning_path", run_type="uipath")
-def build_learning_path(state: LearningAgentState) -> dict[str, Any]:
-    learner_id = _as_int(state.get("learnerId"), 0)
-    course_id = _as_int(state.get("courseId"), 0)
-    duration_weeks = max(1, _as_int(state.get("durationWeeks"), 4))
-    target = _certification_name(state)
-    required_skills = _required_skills(state)
-
-    weekly_hours = 4 if state.get("level", "").lower() in {"advanced", "expert"} else 3
-    modules = [
-        LearningModule(
-            title=f"Week {index}: {skill}",
-            objective=f"Build working knowledge of {skill.lower()} for {target}.",
-            estimatedHours=weekly_hours,
-            resources=[
-                "Official certification learning path",
-                "Hands-on lab or sandbox exercise",
-                "Knowledge check questions",
-            ],
+    modules = []
+    for index, skill in enumerate(skills[: len(hours)], start=1):
+        modules.append(
+            {
+                "moduleId": f"M{index:02d}",
+                "title": f"Module {index}: {skill}",
+                "description": f"Build practical readiness in {skill.lower()} for {input_data.certificationName}.",
+                "estimatedHours": hours[index - 1],
+                "resources": [
+                    {"type": "documentation", "title": "Official certification guide", "priority": "high"},
+                    {"type": "lab", "title": f"Hands-on practice for {skill}", "priority": "high"},
+                    {"type": "practice-exam", "title": f"Knowledge check: {skill}", "priority": "medium"},
+                ],
+            }
         )
-        for index, skill in enumerate(required_skills[:duration_weeks], start=1)
-    ]
 
-    if not modules:
-        modules = [
-            LearningModule(
-                title=f"Week 1: {target} exam review",
-                objective="Validate retained knowledge and close remaining gaps.",
-                estimatedHours=weekly_hours,
-                resources=["Practice assessment", "Exam objectives checklist"],
-            )
-        ]
+    total_hours = sum(module["estimatedHours"] for module in modules)
+    completion_days = max(14, round(total_hours / 1.5))
 
-    learning_path = LearningPath(
-        learnerId=learner_id,
-        courseId=course_id,
-        certificationTarget=target,
-        requiredSkills=required_skills,
-        modules=modules,
-        estimatedHours=sum(module.estimatedHours for module in modules),
-        checkpoints=[
-            "Manager confirms target certification",
-            "Learner completes required skill modules",
-            "Assessment Agent generates readiness evaluation",
-        ],
+    return Output(
+        learnerId=input_data.learnerId,
+        certificationId=input_data.certificationId,
+        learningPath={
+            "title": f"Learning Path for {input_data.certificationName}",
+            "totalModules": len(modules),
+            "estimatedTotalHours": total_hours,
+            "estimatedCompletionDays": completion_days,
+            "modules": modules,
+            "keySkillsTargeted": skills[: len(modules)],
+        },
+        generatedAt=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     )
-
-    return {"learningPath": asdict(learning_path)}
-
-
-builder = StateGraph(LearningAgentState)
-builder.add_node("build_learning_path", build_learning_path)
-builder.add_edge(START, "build_learning_path")
-builder.add_edge("build_learning_path", END)
-
-graph = builder.compile()

@@ -1,5 +1,112 @@
 {
     "$schema": "https://cloud.uipath.com/draft/2024-12/entry-point",
     "$id": "entry-points.json",
-    "entryPoints": []
+    "entryPoints": [
+        {
+            "filePath": "agent",
+            "uniqueId": "4fbe3676-5b21-4863-a624-e9816abc2728",
+            "type": "agent",
+            "input": {
+                "type": "object",
+                "properties": {
+                    "learnerId": {
+                        "title": "Learnerid",
+                        "type": "string"
+                    },
+                    "certificationId": {
+                        "title": "Certificationid",
+                        "type": "string"
+                    },
+                    "certificationName": {
+                        "title": "Certificationname",
+                        "type": "string"
+                    },
+                    "learnerProfile": {
+                        "additionalProperties": true,
+                        "title": "Learnerprofile",
+                        "type": "object"
+                    },
+                    "studyPlan": {
+                        "additionalProperties": true,
+                        "title": "Studyplan",
+                        "type": "object"
+                    },
+                    "quizResults": {
+                        "items": {
+                            "additionalProperties": true,
+                            "type": "object"
+                        },
+                        "title": "Quizresults",
+                        "type": "array"
+                    }
+                },
+                "required": [
+                    "learnerId",
+                    "certificationId",
+                    "certificationName",
+                    "studyPlan"
+                ],
+                "title": "Input"
+            },
+            "output": {
+                "type": "object",
+                "properties": {
+                    "learnerId": {
+                        "title": "Learnerid",
+                        "type": "string"
+                    },
+                    "certificationId": {
+                        "title": "Certificationid",
+                        "type": "string"
+                    },
+                    "assessmentResult": {
+                        "additionalProperties": true,
+                        "title": "Assessmentresult",
+                        "type": "object"
+                    },
+                    "generatedAt": {
+                        "title": "Generatedat",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "learnerId",
+                    "certificationId",
+                    "assessmentResult",
+                    "generatedAt"
+                ],
+                "title": "Output"
+            },
+            "graph": {
+                "nodes": [
+                    {
+                        "id": "main.py:64",
+                        "name": "main",
+                        "type": "function",
+                        "metadata": {
+                            "file": "main.py"
+                        }
+                    },
+                    {
+                        "id": "main.py:27",
+                        "name": "_score",
+                        "type": "function",
+                        "metadata": {
+                            "file": "main.py"
+                        }
+                    }
+                ],
+                "edges": [
+                    {
+                        "source": "main.py:64",
+                        "target": "main.py:27"
+                    },
+                    {
+                        "source": "main.py:64",
+                        "target": "main.py:27"
+                    }
+                ]
+            }
+        }
+    ]
 }

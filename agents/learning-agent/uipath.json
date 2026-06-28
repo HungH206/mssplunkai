@@ -13,6 +13,6 @@
   },
   "functions": {},
   "agents": {
-    "agent": "main.py:build_learning_path"
+    "agent": "main.py:main"
   }
 }

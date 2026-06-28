@@ -1,5 +1,5 @@
 {
-  "ProjectType": "Function",
+  "ProjectType": "Agent",
   "Name": "PlannerAgent",
   "Description": "PlannerAgent coded agent",
   "MainFile": null

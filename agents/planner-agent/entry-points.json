@@ -1,5 +1,131 @@
 {
     "$schema": "https://cloud.uipath.com/draft/2024-12/entry-point",
     "$id": "entry-points.json",
-    "entryPoints": []
+    "entryPoints": [
+        {
+            "filePath": "agent",
+            "uniqueId": "03b08dc6-9067-44d8-809a-6a421d377e2d",
+            "type": "agent",
+            "input": {
+                "type": "object",
+                "properties": {
+                    "learnerId": {
+                        "title": "Learnerid",
+                        "type": "string"
+                    },
+                    "certificationId": {
+                        "title": "Certificationid",
+                        "type": "string"
+                    },
+                    "certificationName": {
+                        "title": "Certificationname",
+                        "type": "string"
+                    },
+                    "learnerProfile": {
+                        "additionalProperties": true,
+                        "title": "Learnerprofile",
+                        "type": "object"
+                    },
+                    "learningPath": {
+                        "additionalProperties": true,
+                        "title": "Learningpath",
+                        "type": "object"
+                    },
+                    "targetExamDate": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "learnerId",
+                    "certificationId",
+                    "certificationName",
+                    "learningPath"
+                ],
+                "title": "Input"
+            },
+            "output": {
+                "type": "object",
+                "properties": {
+                    "learnerId": {
+                        "title": "Learnerid",
+                        "type": "string"
+                    },
+                    "certificationId": {
+                        "title": "Certificationid",
+                        "type": "string"
+                    },
+                    "studyPlan": {
+                        "additionalProperties": true,
+                        "title": "Studyplan",
+                        "type": "object"
+                    },
+                    "generatedAt": {
+                        "title": "Generatedat",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "learnerId",
+                    "certificationId",
+                    "studyPlan",
+                    "generatedAt"
+                ],
+                "title": "Output"
+            },
+            "graph": {
+                "nodes": [
+                    {
+                        "id": "main.py:99",
+                        "name": "main",
+                        "type": "function",
+                        "metadata": {
+                            "file": "main.py"
+                        }
+                    },
+                    {
+                        "id": "main.py:27",
+                        "name": "_today",
+                        "type": "function",
+                        "metadata": {
+                            "file": "main.py"
+                        }
+                    },
+                    {
+                        "id": "main.py:33",
+                        "name": "_parse_date",
+                        "type": "function",
+                        "metadata": {
+                            "file": "main.py"
+                        }
+                    },
+                    {
+                        "id": "main.py:40",
+                        "name": "_module_title",
+                        "type": "function",
+                        "metadata": {
+                            "file": "main.py"
+                        }
+                    }
+                ],
+                "edges": [
+                    {
+                        "source": "main.py:99",
+                        "target": "main.py:27"
+                    },
+                    {
+                        "source": "main.py:99",
+                        "target": "main.py:33"
+                    },
+                    {
+                        "source": "main.py:99",
+                        "target": "main.py:40"
+                    },
+                    {
+                        "source": "main.py:99",
+                        "target": "main.py:40"
+                    }
+                ]
+            }
+        }
+    ]
 }

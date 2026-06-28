@@ -4,152 +4,112 @@
     "entryPoints": [
         {
             "filePath": "agent",
-            "uniqueId": "b7e1568b-46f8-4dc5-a49d-161989e35063",
+            "uniqueId": "c49409f6-8509-4877-8164-12ae7dcad2bc",
             "type": "agent",
             "input": {
                 "type": "object",
                 "properties": {
                     "learnerId": {
                         "title": "Learnerid",
-                        "type": "integer"
-                    },
-                    "courseId": {
-                        "title": "Courseid",
-                        "type": "integer"
-                    },
-                    "learnerName": {
-                        "title": "Learnername",
                         "type": "string"
                     },
-                    "role": {
-                        "title": "Role",
+                    "certificationId": {
+                        "title": "Certificationid",
                         "type": "string"
                     },
-                    "certificationTarget": {
-                        "title": "Certificationtarget",
+                    "certificationName": {
+                        "title": "Certificationname",
                         "type": "string"
                     },
-                    "provider": {
-                        "title": "Provider",
-                        "type": "string"
-                    },
-                    "level": {
-                        "title": "Level",
-                        "type": "string"
-                    },
-                    "durationWeeks": {
-                        "title": "Durationweeks",
-                        "type": "integer"
-                    },
-                    "skillHistory": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "title": "Skillhistory",
-                        "type": "array"
-                    },
-                    "bpmnContext": {
+                    "learnerProfile": {
                         "additionalProperties": true,
-                        "title": "Bpmncontext",
-                        "type": "object"
-                    },
-                    "learningPath": {
-                        "additionalProperties": true,
-                        "title": "Learningpath",
+                        "title": "Learnerprofile",
                         "type": "object"
                     }
                 },
-                "required": []
+                "required": [
+                    "learnerId",
+                    "certificationId",
+                    "certificationName"
+                ],
+                "title": "Input"
             },
             "output": {
                 "type": "object",
                 "properties": {
                     "learnerId": {
                         "title": "Learnerid",
-                        "type": "integer"
-                    },
-                    "courseId": {
-                        "title": "Courseid",
-                        "type": "integer"
-                    },
-                    "learnerName": {
-                        "title": "Learnername",
                         "type": "string"
                     },
-                    "role": {
-                        "title": "Role",
+                    "certificationId": {
+                        "title": "Certificationid",
                         "type": "string"
-                    },
-                    "certificationTarget": {
-                        "title": "Certificationtarget",
-                        "type": "string"
-                    },
-                    "provider": {
-                        "title": "Provider",
-                        "type": "string"
-                    },
-                    "level": {
-                        "title": "Level",
-                        "type": "string"
-                    },
-                    "durationWeeks": {
-                        "title": "Durationweeks",
-                        "type": "integer"
-                    },
-                    "skillHistory": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "title": "Skillhistory",
-                        "type": "array"
-                    },
-                    "bpmnContext": {
-                        "additionalProperties": true,
-                        "title": "Bpmncontext",
-                        "type": "object"
                     },
                     "learningPath": {
                         "additionalProperties": true,
                         "title": "Learningpath",
                         "type": "object"
+                    },
+                    "generatedAt": {
+                        "title": "Generatedat",
+                        "type": "string"
                     }
                 },
-                "required": []
+                "required": [
+                    "learnerId",
+                    "certificationId",
+                    "learningPath",
+                    "generatedAt"
+                ],
+                "title": "Output"
             },
             "graph": {
                 "nodes": [
                     {
-                        "id": "__start__",
-                        "name": "__start__",
-                        "type": "__start__",
-                        "subgraph": null,
-                        "metadata": {}
+                        "id": "main.py:69",
+                        "name": "main",
+                        "type": "function",
+                        "metadata": {
+                            "file": "main.py"
+                        }
                     },
                     {
-                        "id": "build_learning_path",
-                        "name": "build_learning_path",
-                        "type": "node",
-                        "subgraph": null,
-                        "metadata": {}
+                        "id": "main.py:24",
+                        "name": "_experience_level",
+                        "type": "function",
+                        "metadata": {
+                            "file": "main.py"
+                        }
                     },
                     {
-                        "id": "__end__",
-                        "name": "__end__",
-                        "type": "__end__",
-                        "subgraph": null,
-                        "metadata": {}
+                        "id": "main.py:36",
+                        "name": "_skills",
+                        "type": "function",
+                        "metadata": {
+                            "file": "main.py"
+                        }
+                    },
+                    {
+                        "id": "main.py:32",
+                        "name": "_module_hours",
+                        "type": "function",
+                        "metadata": {
+                            "file": "main.py"
+                        }
                     }
                 ],
                 "edges": [
                     {
-                        "source": "__start__",
-                        "target": "build_learning_path",
-                        "label": null
+                        "source": "main.py:69",
+                        "target": "main.py:24"
                     },
                     {
-                        "source": "build_learning_path",
-                        "target": "__end__",
-                        "label": null
+                        "source": "main.py:69",
+                        "target": "main.py:36"
+                    },
+                    {
+                        "source": "main.py:69",
+                        "target": "main.py:32"
                     }
                 ]
             }

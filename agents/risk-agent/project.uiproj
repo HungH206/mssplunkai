@@ -1,5 +1,5 @@
 {
-  "ProjectType": "Function",
+  "ProjectType": "Agent",
   "Name": "RiskAgent",
   "Description": "RiskAgent coded agent",
   "MainFile": null
