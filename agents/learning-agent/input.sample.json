@@ -1,0 +1,16 @@
+{
+  "learnerId": 1,
+  "courseId": 1,
+  "learnerName": "Avery Nguyen",
+  "role": "Cloud Engineer",
+  "certificationTarget": "Azure Administrator Associate",
+  "provider": "Microsoft",
+  "level": "Intermediate",
+  "durationWeeks": 4,
+  "skillHistory": ["Core platform concepts"],
+  "bpmnContext": {
+    "caseId": 101,
+    "source": "CertFlow BPMN",
+    "requestedBy": "manager-review"
+  }
+}

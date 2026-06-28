@@ -1,0 +1,6 @@
+{
+  "ProjectType": "Agent",
+  "Name": "certflow-learning-agent",
+  "Description": "UiPath coded Python agent that generates certification learning paths for CertFlow.",
+  "MainFile": null
+}

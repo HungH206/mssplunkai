@@ -1,0 +1,7 @@
+[project]
+name = "RiskAgent"
+version = "0.1.0"
+description = "RiskAgent coded agent"
+dependencies = [
+
+]

@@ -1,0 +1,7 @@
+[project]
+name = "CoachingAgent"
+version = "0.1.0"
+description = "CoachingAgent coded agent"
+dependencies = [
+
+]

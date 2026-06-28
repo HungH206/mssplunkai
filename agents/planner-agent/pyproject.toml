@@ -1,0 +1,7 @@
+[project]
+name = "PlannerAgent"
+version = "0.1.0"
+description = "PlannerAgent coded agent"
+dependencies = [
+
+]

@@ -1,0 +1,10 @@
+.venv/
+.env
+dist/
+*.nupkg
+__pycache__/
+*.pyc
+__uipath/
+.uipath/.auth.json
+.uipath/.error_log
+*.egg-info/

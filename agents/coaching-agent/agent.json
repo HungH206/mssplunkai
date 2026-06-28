@@ -1,0 +1,396 @@
+{
+  "version": "1.1.0",
+  "settings": {
+    "model": "gpt-5.4",
+    "maxTokens": 128000,
+    "temperature": 0,
+    "engine": "basic-v2",
+    "maxIterations": 25,
+    "mode": "standard"
+  },
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "learnerId": {
+        "type": "string",
+        "description": "Unique identifier of the learner. Passed through from RiskAgent output for traceability. Must be non-empty."
+      },
+      "certificationId": {
+        "type": "string",
+        "description": "Unique identifier of the certification. Passed through for traceability. Must be non-empty."
+      },
+      "certificationName": {
+        "type": "string",
+        "description": "Human-readable name of the certification (e.g., 'AWS Solutions Architect'). Used to contextualize coaching recommendations."
+      },
+      "learnerProfile": {
+        "type": "object",
+        "description": "Learner background profile. Contains: name (string), role (string), department (string), experienceLevel (beginner/intermediate/advanced), previousCertifications (array of strings).",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Full name of the learner."
+          },
+          "role": {
+            "type": "string",
+            "description": "Current job role."
+          },
+          "department": {
+            "type": "string",
+            "description": "Department of the learner."
+          },
+          "experienceLevel": {
+            "type": "string",
+            "enum": [
+              "beginner",
+              "intermediate",
+              "advanced"
+            ],
+            "description": "Experience level in the certification domain."
+          },
+          "previousCertifications": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Previously completed certifications."
+          }
+        }
+      },
+      "assessmentResult": {
+        "type": "object",
+        "description": "Assessment result from the AssessmentAgent. Key fields: overallReadinessScore (0-100), readinessLevel, topicScores, strengths, weaknesses, recommendations, estimatedPassProbability.",
+        "properties": {
+          "overallReadinessScore": {
+            "type": "number",
+            "description": "Overall readiness score 0-100."
+          },
+          "readinessLevel": {
+            "type": "string",
+            "description": "not-ready, partially-ready, or ready."
+          },
+          "topicScores": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Per-topic readiness scores."
+          },
+          "strengths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Strong topic areas."
+          },
+          "weaknesses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Weak topic areas."
+          },
+          "recommendations": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Prior improvement recommendations."
+          },
+          "estimatedPassProbability": {
+            "type": "number",
+            "description": "Estimated pass probability 0-100."
+          }
+        }
+      },
+      "studyPlan": {
+        "type": "object",
+        "description": "The current study plan from PlannerAgent. Used as the baseline to update with coaching adjustments.",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Current study plan title."
+          },
+          "dailyStudyHours": {
+            "type": "number",
+            "description": "Current daily study hours."
+          },
+          "targetExamDate": {
+            "type": "string",
+            "description": "Current target exam date in YYYY-MM-DD."
+          },
+          "weeklyMilestones": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Current weekly milestones."
+          }
+        }
+      },
+      "riskEvaluation": {
+        "type": "object",
+        "description": "Risk evaluation from the RiskAgent. Contains riskLevel, riskScore, riskFactors, and mitigationSuggestions. Use this to understand why the learner was flagged and target coaching accordingly.",
+        "properties": {
+          "riskLevel": {
+            "type": "string",
+            "description": "high or low."
+          },
+          "riskScore": {
+            "type": "number",
+            "description": "Numeric risk score 0-100."
+          },
+          "riskFactors": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Identified risk factors with severity and detail."
+          },
+          "mitigationSuggestions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Suggested mitigations from the risk evaluation."
+          },
+          "summary": {
+            "type": "string",
+            "description": "Plain-language risk summary."
+          }
+        }
+      },
+      "managerFeedback": {
+        "type": "string",
+        "description": "Optional plain-text feedback from the manager provided during the Manager Review task. Use this to tailor coaching actions to the manager's specific concerns. If not provided, rely on riskFactors and weaknesses."
+      }
+    },
+    "required": [
+      "learnerId",
+      "certificationId",
+      "certificationName",
+      "learnerProfile",
+      "assessmentResult",
+      "studyPlan",
+      "riskEvaluation"
+    ]
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "learnerId": {
+        "type": "string",
+        "description": "Learner ID echoed from input for downstream traceability."
+      },
+      "certificationId": {
+        "type": "string",
+        "description": "Certification ID echoed from input for downstream traceability."
+      },
+      "coachingPlan": {
+        "type": "object",
+        "description": "The complete coaching plan including updated study schedule and targeted interventions.",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Title of the coaching plan (e.g., 'Coaching Plan for Hoang — AWS Solutions Architect')."
+          },
+          "coachingFocus": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of the top 3 focus areas the coaching plan targets, derived from weaknesses and riskFactors."
+          },
+          "coachingActions": {
+            "type": "array",
+            "description": "Specific, actionable coaching interventions ordered by priority.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "type": "string",
+                  "description": "Description of the coaching action (e.g., 'Complete 3 practice exams on IAM and S3 within 5 days')."
+                },
+                "targetArea": {
+                  "type": "string",
+                  "description": "The topic or skill area this action addresses."
+                },
+                "durationDays": {
+                  "type": "integer",
+                  "description": "Number of days allocated to complete this action."
+                },
+                "priority": {
+                  "type": "string",
+                  "enum": [
+                    "high",
+                    "medium",
+                    "low"
+                  ],
+                  "description": "Priority level of this action."
+                }
+              }
+            }
+          },
+          "updatedStudyPlan": {
+            "type": "object",
+            "description": "Revised study plan reflecting coaching adjustments.",
+            "properties": {
+              "adjustedDailyStudyHours": {
+                "type": "number",
+                "description": "Updated daily study hours recommendation, typically higher than the original plan."
+              },
+              "revisedTargetExamDate": {
+                "type": "string",
+                "description": "New recommended target exam date in YYYY-MM-DD, extended to allow sufficient coaching time."
+              },
+              "addedWeeks": {
+                "type": "integer",
+                "description": "Number of additional weeks added to the study plan to accommodate coaching."
+              },
+              "revisedMilestones": {
+                "type": "array",
+                "description": "Updated weekly milestones with coaching actions integrated.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "week": {
+                      "type": "integer",
+                      "description": "Week number."
+                    },
+                    "focus": {
+                      "type": "string",
+                      "description": "Primary focus area this week."
+                    },
+                    "activities": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Specific activities for this week."
+                    },
+                    "estimatedHours": {
+                      "type": "number",
+                      "description": "Total study hours for this week."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "targetReassessmentDate": {
+            "type": "string",
+            "description": "Recommended date for the next assessment cycle in YYYY-MM-DD format. Should be 2-4 weeks from today based on coaching intensity."
+          },
+          "successCriteria": {
+            "type": "string",
+            "description": "Plain-language description of what the learner must achieve to pass the next assessment (e.g., 'Achieve overall readiness score >= 75% and pass probability >= 70%')."
+          }
+        }
+      },
+      "generatedAt": {
+        "type": "string",
+        "description": "ISO 8601 UTC timestamp of when the coaching plan was generated. Format: YYYY-MM-DDTHH:mm:ssZ."
+      }
+    },
+    "required": [
+      "learnerId",
+      "certificationId",
+      "coachingPlan",
+      "generatedAt"
+    ]
+  },
+  "metadata": {
+    "storageVersion": "50.0.0",
+    "isConversational": false,
+    "showProjectCreationExperience": false,
+    "targetRuntime": "pythonAgent"
+  },
+  "type": "lowCode",
+  "projectId": "bbb1850c-57d7-4c73-a3ea-1a82603b8277",
+  "messages": [
+    {
+      "role": "system",
+      "content": "## Role\nYou are the Coaching Agent, an AI specialist in personalized learning intervention for professional certification programs. Your responsibility is to analyze why a learner was flagged as high-risk or not approved by a manager, then generate a targeted coaching plan with updated study milestones, specific interventions, and a revised exam timeline to get the learner back on track.\n\n## Tool Rules\n- You have no external tools. Answer directly using your expertise in coaching, learning design, and certification preparation.\n- Always prioritize managerFeedback if provided — it overrides general risk factor analysis for coaching focus.\n- If managerFeedback is absent, derive coaching focus from riskEvaluation.riskFactors and assessmentResult.weaknesses.\n- The updatedStudyPlan must always extend the original studyPlan.targetExamDate by at least 1 week to allow coaching time.\n- targetReassessmentDate must be 2–4 weeks from today based on coaching intensity (more actions = 4 weeks, fewer = 2 weeks).\n\n## Work Steps\n1. Review managerFeedback (if provided) to identify the manager's primary concerns — these become top-priority coaching actions.\n2. Cross-reference assessmentResult.weaknesses and riskEvaluation.riskFactors to identify the top 3 coaching focus areas.\n3. Design 3–5 specific, time-bound coaching actions targeting the focus areas, each with a durationDays and priority level.\n4. Calculate adjustedDailyStudyHours by increasing the original dailyStudyHours by 20–50% depending on risk severity.\n5. Extend the study timeline: add addedWeeks (minimum 1, maximum 4) and compute revisedTargetExamDate.\n6. Build revisedMilestones that integrate coaching actions week-by-week into the updated schedule.\n7. Set targetReassessmentDate to 2–4 weeks from today.\n8. Write a clear successCriteria statement specifying what readiness score and pass probability the learner must reach.\n9. Return the complete output as strict JSON matching the outputSchema exactly.\n\n## Output Rules\n- Return ONLY JSON that matches outputSchema exactly. No extra keys. No markdown. No extra text.\n- Always echo learnerId and certificationId from input into the output.\n- All dates must be in ISO 8601 format (YYYY-MM-DD).\n- coachingActions must be ordered by priority (high first).\n- revisedTargetExamDate must always be later than the original studyPlan.targetExamDate.\n- generatedAt must be a valid ISO 8601 UTC timestamp.\n\n## Final Reminder\nAlways produce a realistic, empathetic, JSON-only coaching plan that gives the learner a clear path forward with specific actions, an updated timeline, and measurable success criteria for reassessment.",
+      "contentTokens": [
+        {
+          "type": "simpleText",
+          "rawString": "## Role\nYou are the Coaching Agent, an AI specialist in personalized learning intervention for professional certification programs. Your responsibility is to analyze why a learner was flagged as high-risk or not approved by a manager, then generate a targeted coaching plan with updated study milestones, specific interventions, and a revised exam timeline to get the learner back on track.\n\n## Tool Rules\n- You have no external tools. Answer directly using your expertise in coaching, learning design, and certification preparation.\n- Always prioritize managerFeedback if provided — it overrides general risk factor analysis for coaching focus.\n- If managerFeedback is absent, derive coaching focus from riskEvaluation.riskFactors and assessmentResult.weaknesses.\n- The updatedStudyPlan must always extend the original studyPlan.targetExamDate by at least 1 week to allow coaching time.\n- targetReassessmentDate must be 2–4 weeks from today based on coaching intensity (more actions = 4 weeks, fewer = 2 weeks).\n\n## Work Steps\n1. Review managerFeedback (if provided) to identify the manager's primary concerns — these become top-priority coaching actions.\n2. Cross-reference assessmentResult.weaknesses and riskEvaluation.riskFactors to identify the top 3 coaching focus areas.\n3. Design 3–5 specific, time-bound coaching actions targeting the focus areas, each with a durationDays and priority level.\n4. Calculate adjustedDailyStudyHours by increasing the original dailyStudyHours by 20–50% depending on risk severity.\n5. Extend the study timeline: add addedWeeks (minimum 1, maximum 4) and compute revisedTargetExamDate.\n6. Build revisedMilestones that integrate coaching actions week-by-week into the updated schedule.\n7. Set targetReassessmentDate to 2–4 weeks from today.\n8. Write a clear successCriteria statement specifying what readiness score and pass probability the learner must reach.\n9. Return the complete output as strict JSON matching the outputSchema exactly.\n\n## Output Rules\n- Return ONLY JSON that matches outputSchema exactly. No extra keys. No markdown. No extra text.\n- Always echo learnerId and certificationId from input into the output.\n- All dates must be in ISO 8601 format (YYYY-MM-DD).\n- coachingActions must be ordered by priority (high first).\n- revisedTargetExamDate must always be later than the original studyPlan.targetExamDate.\n- generatedAt must be a valid ISO 8601 UTC timestamp.\n\n## Final Reminder\nAlways produce a realistic, empathetic, JSON-only coaching plan that gives the learner a clear path forward with specific actions, an updated timeline, and measurable success criteria for reassessment."
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": "Create a personalized coaching plan for the high-risk learner described below.\n\n## Inputs\n\n- Learner ID: <learner_id>{{learnerId}}</learner_id>\n- Certification ID: <certification_id>{{certificationId}}</certification_id>\n- Certification Name: <certification_name>{{certificationName}}</certification_name>\n- Learner Profile: <learner_profile>{{learnerProfile}}</learner_profile>\n- Assessment Result: <assessment_result>{{assessmentResult}}</assessment_result>\n- Current Study Plan: <study_plan>{{studyPlan}}</study_plan>\n- Risk Evaluation: <risk_evaluation>{{riskEvaluation}}</risk_evaluation>\n- Manager Feedback: <manager_feedback>{{managerFeedback}}</manager_feedback>\n\n## Steps\n\n1. If managerFeedback is provided, treat it as the highest priority input — extract the manager's main concerns as the primary coaching focus areas.\n2. Cross-reference assessmentResult.weaknesses and riskEvaluation.riskFactors to finalize the top 3 coachingFocus areas.\n3. Design 3–5 specific, time-bound coachingActions targeting those focus areas. Order by priority (high first). Each must have an action description, targetArea, durationDays, and priority.\n4. Calculate adjustedDailyStudyHours = studyPlan.dailyStudyHours × 1.3 (medium risk) or × 1.5 (high risk score >= 70). Round to 1 decimal place.\n5. Determine addedWeeks (1–4) based on number and severity of risk factors. Compute revisedTargetExamDate = studyPlan.targetExamDate + addedWeeks.\n6. Build revisedMilestones integrating coaching actions week-by-week. Each week must have a focus, activities list, and estimatedHours.\n7. Set targetReassessmentDate = today + 14 days (low coaching intensity) or today + 28 days (high intensity).\n8. Write successCriteria specifying minimum overallReadinessScore (>= 75%) and estimatedPassProbability (>= 70%) to pass next assessment.\n9. Set generatedAt to the current UTC timestamp in ISO 8601 format.\n\n## Output Rules\n\n- Return ONLY valid JSON matching the outputSchema exactly. No markdown, no explanation, no extra text.\n- Echo learnerId and certificationId from input.\n- All dates must be YYYY-MM-DD format.\n- coachingActions must be ordered high → medium → low priority.\n- revisedTargetExamDate must be strictly later than the original studyPlan.targetExamDate.",
+      "contentTokens": [
+        {
+          "type": "simpleText",
+          "rawString": "Create a personalized coaching plan for the high-risk learner described below.\n\n## Inputs\n\n- Learner ID: <learner_id>"
+        },
+        {
+          "type": "variable",
+          "rawString": "input.learnerId"
+        },
+        {
+          "type": "simpleText",
+          "rawString": "</learner_id>\n- Certification ID: <certification_id>"
+        },
+        {
+          "type": "variable",
+          "rawString": "input.certificationId"
+        },
+        {
+          "type": "simpleText",
+          "rawString": "</certification_id>\n- Certification Name: <certification_name>"
+        },
+        {
+          "type": "variable",
+          "rawString": "input.certificationName"
+        },
+        {
+          "type": "simpleText",
+          "rawString": "</certification_name>\n- Learner Profile: <learner_profile>"
+        },
+        {
+          "type": "variable",
+          "rawString": "input.learnerProfile"
+        },
+        {
+          "type": "simpleText",
+          "rawString": "</learner_profile>\n- Assessment Result: <assessment_result>"
+        },
+        {
+          "type": "variable",
+          "rawString": "input.assessmentResult"
+        },
+        {
+          "type": "simpleText",
+          "rawString": "</assessment_result>\n- Current Study Plan: <study_plan>"
+        },
+        {
+          "type": "variable",
+          "rawString": "input.studyPlan"
+        },
+        {
+          "type": "simpleText",
+          "rawString": "</study_plan>\n- Risk Evaluation: <risk_evaluation>"
+        },
+        {
+          "type": "variable",
+          "rawString": "input.riskEvaluation"
+        },
+        {
+          "type": "simpleText",
+          "rawString": "</risk_evaluation>\n- Manager Feedback: <manager_feedback>"
+        },
+        {
+          "type": "variable",
+          "rawString": "input.managerFeedback"
+        },
+        {
+          "type": "simpleText",
+          "rawString": "</manager_feedback>\n\n## Steps\n\n1. If managerFeedback is provided, treat it as the highest priority input — extract the manager's main concerns as the primary coaching focus areas.\n2. Cross-reference assessmentResult.weaknesses and riskEvaluation.riskFactors to finalize the top 3 coachingFocus areas.\n3. Design 3–5 specific, time-bound coachingActions targeting those focus areas. Order by priority (high first). Each must have an action description, targetArea, durationDays, and priority.\n4. Calculate adjustedDailyStudyHours = studyPlan.dailyStudyHours × 1.3 (medium risk) or × 1.5 (high risk score >= 70). Round to 1 decimal place.\n5. Determine addedWeeks (1–4) based on number and severity of risk factors. Compute revisedTargetExamDate = studyPlan.targetExamDate + addedWeeks.\n6. Build revisedMilestones integrating coaching actions week-by-week. Each week must have a focus, activities list, and estimatedHours.\n7. Set targetReassessmentDate = today + 14 days (low coaching intensity) or today + 28 days (high intensity).\n8. Write successCriteria specifying minimum overallReadinessScore (>= 75%) and estimatedPassProbability (>= 70%) to pass next assessment.\n9. Set generatedAt to the current UTC timestamp in ISO 8601 format.\n\n## Output Rules\n\n- Return ONLY valid JSON matching the outputSchema exactly. No markdown, no explanation, no extra text.\n- Echo learnerId and certificationId from input.\n- All dates must be YYYY-MM-DD format.\n- coachingActions must be ordered high → medium → low priority.\n- revisedTargetExamDate must be strictly later than the original studyPlan.targetExamDate."
+        }
+      ]
+    }
+  ]
+}

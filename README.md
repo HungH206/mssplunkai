@@ -38,15 +38,15 @@ The platform keeps humans involved at critical decision points while automating 
 Employee
   |
   v
-Certification Case
+Certification Case  (CertificationCases + vw_CertificationCases)
   |
   v
 Case Orchestrator
   |
-  |-- Learning Agent
+  |-- Learning Agent        (Express API + UiPath coded agent)
   |-- Study Planner Agent
   |-- Assessment Agent
-  |-- Risk Agent
+  |-- Risk / Insights Agent
   `-- Manager Review
   |
   v
@@ -56,21 +56,29 @@ Azure SQL Database
 Power BI Analytics
 ```
 
+The platform offers two complementary execution paths for the agents:
+
+- **In-process agents** in the Express backend (`backend/src/agents`), used by the React dashboard for fast, interactive generation.
+- **UiPath coded agents** in `agents/` (LangGraph + UiPath Python SDK), used when the same logic is orchestrated by UiPath Maestro, Orchestrator, or a BPMN process.
+
 ## Core Features
 
 ### Certification Case Management
 
 Every learner is tracked through a certification case. Cases evolve over time instead of following a static workflow.
 
+Cases are persisted in the `CertificationCases` table and surfaced through the `vw_CertificationCases` SQL view, which joins learner, team, course, and progress data into a single record.
+
 Tracked case data includes:
 
-- Employee
-- Team
-- Certification target
-- Progress
-- Readiness score
+- Employee and team
+- Certification target (course, provider, level)
+- Progress and readiness score
+- Current stage (Intake, Learning, Manager Review, Intervention, Certified)
 - Risk level
-- Approval status
+- Manager / approval status
+
+A case advances through stages automatically based on readiness and status, while still requiring a manager to approve key transitions.
 
 ### Learning Path Agent
 
@@ -100,6 +108,8 @@ Required Skills:
 - Event Grid
 - Monitoring
 ```
+
+The learning path logic is available both as an Express endpoint and as a standalone UiPath coded agent (see [UiPath Learning Agent](#uipath-learning-agent)).
 
 ### Study Planner Agent
 
@@ -152,9 +162,9 @@ Recommendation:
 Focus on Azure Storage and Monitoring.
 ```
 
-### Risk Agent
+### Risk & Insights Agent
 
-Identifies learners at risk of failing.
+Identifies learners at risk of failing and powers leadership analytics.
 
 Inputs:
 
@@ -168,6 +178,7 @@ Outputs:
 - Risk level
 - Predicted pass probability
 - Intervention recommendations
+- Aggregate insights for the executive dashboard
 
 Example:
 
@@ -209,10 +220,11 @@ Metrics include:
 
 | Layer | Technology |
 | --- | --- |
-| Frontend | React, Vite, Tailwind CSS |
+| Frontend | React, Vite, Tailwind CSS, shadcn/ui |
 | Backend | Node.js, Express |
-| Database | Azure SQL Database |
-| AI | Gemini API, agent-based orchestration |
+| Database | Azure SQL Database (`mssql` driver) |
+| In-process AI | Gemini API, agent-based orchestration |
+| Coded agents | UiPath Python SDK, LangGraph |
 | Analytics | Power BI |
 | Workflow orchestration | UiPath Maestro Case, UiPath Automation Cloud |
 
@@ -221,29 +233,53 @@ Metrics include:
 ```txt
 .
 |-- Certopsaidashboarddesign/   # React/Vite frontend dashboard
-|-- backend/                    # Express API and agent endpoints
-|-- database/                   # Azure SQL schema and seed scripts
+|-- backend/                    # Express API and in-process agent endpoints
+|   `-- src/
+|       |-- agents/             # learningAgent, plannerAgent, assessmentAgent, insightsAgent
+|       |-- routes/             # teams, learners, courses, assignments, cases, plans, assessments, insights
+|       |-- services/           # sql.js (Azure SQL), gemini.js (LLM)
+|       `-- server.js           # Express app entry point
+|-- agents/                     # UiPath coded agents (LangGraph + UiPath Python SDK)
+|   `-- learning-agent/         # CertFlow Learning Agent
+|-- database/                   # Azure SQL schema, views, and seed scripts
 `-- README.md                   # Project overview
+```
+
+## Database
+
+The schema is split into ordered scripts so base tables, agent tables, and the case view can be applied independently.
+
+| Script | Purpose |
+| --- | --- |
+| `database/base_tables.sql` | Core tables: Teams, Learners, CertificateCourses, LearnerCourses |
+| `database/agent_tables.sql` | Agent output tables (LearningPlans, etc.) and CertificationCases; requires base tables first |
+| `database/case_view.sql` | `vw_CertificationCases` view joining learner, team, course, and progress data |
+| `database/agent_seed.sql` | Sample seed data |
+| `database/setup.sql` | Convenience script that creates the full base schema |
+| `database/diagnostics.sql` | Read-only checks for verifying the schema |
+
+Run them in Azure SQL Query Editor (or `sqlcmd`) in this order:
+
+```txt
+database/base_tables.sql
+database/agent_tables.sql
+database/case_view.sql
+database/agent_seed.sql
 ```
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js
-- npm
+- Node.js and npm
 - Azure SQL Database
-- UIPath Cloud for Lab and Agent Monitoring
+- UiPath Automation Cloud (for the coded agent, labs, and agent monitoring)
+- Python 3.11 (only required for the UiPath coded agent)
 - Optional: Gemini API key
 
 ### Database
 
-Run the SQL scripts in Azure SQL Query Editor:
-
-```txt
-database/agent_tables.sql
-database/agent_seed.sql
-```
+Apply the SQL scripts in the order shown in the [Database](#database) section.
 
 ### Backend
 
@@ -277,6 +313,49 @@ By default, the Vite frontend runs at:
 http://localhost:5173
 ```
 
+## UiPath Learning Agent
+
+`agents/learning-agent` is a UiPath coded Python agent (LangGraph + UiPath Python SDK) that generates a certification learning path from a CertFlow BPMN or Maestro workflow. It mirrors the in-process Learning Agent so the same logic can run inside UiPath orchestration.
+
+Input contract:
+
+```json
+{
+  "learnerId": 1,
+  "courseId": 1,
+  "learnerName": "Avery Nguyen",
+  "role": "Cloud Engineer",
+  "certificationTarget": "Azure Administrator Associate",
+  "provider": "Microsoft",
+  "level": "Intermediate",
+  "durationWeeks": 4,
+  "skillHistory": ["Core platform concepts"]
+}
+```
+
+It returns a `learningPath` object (required skills, weekly modules, estimated hours, checkpoints) and hands off to the `study-planner-agent`.
+
+Local setup:
+
+```bash
+cd agents/learning-agent
+python3.11 -m venv .venv
+source .venv/bin/activate
+pip install -e .
+uipath auth
+uipath init
+uipath run agent '{"learnerId":1,"courseId":1,"certificationTarget":"Azure Administrator Associate","level":"Intermediate","durationWeeks":4}'
+```
+
+Publish to UiPath so Maestro, Orchestrator, the CLI, or a BPMN process can invoke it:
+
+```bash
+uipath pack
+uipath publish --my-workspace
+```
+
+See `agents/learning-agent/README.md` for the full Studio Web and publishing workflow.
+
 ## API Endpoints
 
 ```txt
@@ -294,9 +373,17 @@ POST /api/courses
 GET  /api/assignments
 POST /api/assignments
 
+GET  /api/cases
+POST /api/cases
+POST /api/cases/:id/start
+
 POST /api/plans/learning/generate
 POST /api/plans/study/generate
+GET  /api/plans/study
+
 POST /api/assessments/generate
+GET  /api/assessments
+
 GET  /api/insights
 ```
 

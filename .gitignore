@@ -3,3 +3,21 @@ dist/
 .DS_Store
 .env
 .env.local
+*.vsix
+*.nupkg
+
+# Python / agent local runtime artifacts
+**/.venv/
+**/__pycache__/
+**/*.egg-info/
+**/__uipath__/
+**/__uipath/
+**/.uipath/
+**/.agent/
+**/.claude/
+
+# Root-level UiPath scratch files; agent project metadata under agents/ is tracked.
+/.uipath/
+/uipath.json
+/bindings.json
+/entry-points.json

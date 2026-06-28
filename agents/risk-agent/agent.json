@@ -1,0 +1,297 @@
+{
+  "version": "1.1.0",
+  "settings": {
+    "model": "gpt-5.4",
+    "maxTokens": 128000,
+    "temperature": 0,
+    "engine": "basic-v2",
+    "maxIterations": 25,
+    "mode": "standard"
+  },
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "learnerId": {
+        "type": "string",
+        "description": "Unique identifier of the learner. Passed through from AssessmentAgent output for traceability. Must be non-empty."
+      },
+      "certificationId": {
+        "type": "string",
+        "description": "Unique identifier of the certification. Passed through for traceability. Must be non-empty."
+      },
+      "certificationName": {
+        "type": "string",
+        "description": "Human-readable name of the certification. Used to contextualize risk evaluation."
+      },
+      "learnerProfile": {
+        "type": "object",
+        "description": "Learner background profile. Contains: name (string), role (string), department (string), experienceLevel (beginner/intermediate/advanced), previousCertifications (array of strings).",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Full name of the learner."
+          },
+          "role": {
+            "type": "string",
+            "description": "Current job role."
+          },
+          "department": {
+            "type": "string",
+            "description": "Department of the learner."
+          },
+          "experienceLevel": {
+            "type": "string",
+            "enum": [
+              "beginner",
+              "intermediate",
+              "advanced"
+            ],
+            "description": "Experience level in the certification domain."
+          },
+          "previousCertifications": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Previously completed certifications."
+          }
+        }
+      },
+      "assessmentResult": {
+        "type": "object",
+        "description": "Full assessment result from the AssessmentAgent. Key fields: overallReadinessScore (0-100), readinessLevel (not-ready/partially-ready/ready), topicScores (array), strengths (array), weaknesses (array), estimatedPassProbability (0-100).",
+        "properties": {
+          "overallReadinessScore": {
+            "type": "number",
+            "description": "Overall readiness score 0-100."
+          },
+          "readinessLevel": {
+            "type": "string",
+            "description": "not-ready, partially-ready, or ready."
+          },
+          "topicScores": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Per-topic readiness scores."
+          },
+          "strengths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Strong topic areas."
+          },
+          "weaknesses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Weak topic areas."
+          },
+          "estimatedPassProbability": {
+            "type": "number",
+            "description": "Estimated pass probability 0-100."
+          },
+          "recommendations": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Actionable improvement recommendations."
+          }
+        }
+      },
+      "studyPlan": {
+        "type": "object",
+        "description": "The study plan from PlannerAgent. Used to assess risk factors like insufficient study time, missed milestones, or unrealistic exam dates.",
+        "properties": {
+          "dailyStudyHours": {
+            "type": "number",
+            "description": "Recommended daily study hours."
+          },
+          "targetExamDate": {
+            "type": "string",
+            "description": "Target exam date in YYYY-MM-DD."
+          },
+          "weeklyMilestones": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Weekly study milestones."
+          }
+        }
+      }
+    },
+    "required": [
+      "learnerId",
+      "certificationId",
+      "certificationName",
+      "learnerProfile",
+      "assessmentResult",
+      "studyPlan"
+    ]
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "learnerId": {
+        "type": "string",
+        "description": "Learner ID echoed from input for downstream traceability."
+      },
+      "certificationId": {
+        "type": "string",
+        "description": "Certification ID echoed from input for downstream traceability."
+      },
+      "riskEvaluation": {
+        "type": "object",
+        "description": "Complete risk evaluation result used by the BPMN gateway to route the learner.",
+        "properties": {
+          "riskLevel": {
+            "type": "string",
+            "enum": [
+              "high",
+              "low"
+            ],
+            "description": "Final risk classification. high = requires manager review. low = can proceed directly to certification completion."
+          },
+          "riskScore": {
+            "type": "number",
+            "description": "Numeric risk score from 0 (no risk) to 100 (maximum risk). Scores >= 50 are classified as high risk."
+          },
+          "isReady": {
+            "type": "boolean",
+            "description": "Boolean flag used directly by the BPMN Ready? gateway. true = learner is ready to proceed (low risk, high readiness). false = learner needs manager review."
+          },
+          "riskFactors": {
+            "type": "array",
+            "description": "List of identified risk factors contributing to the risk score.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "factor": {
+                  "type": "string",
+                  "description": "Name of the risk factor (e.g., 'Low readiness score', 'Insufficient study time', 'Multiple weak topics')."
+                },
+                "severity": {
+                  "type": "string",
+                  "enum": [
+                    "high",
+                    "medium",
+                    "low"
+                  ],
+                  "description": "Severity of this individual risk factor."
+                },
+                "detail": {
+                  "type": "string",
+                  "description": "Explanation of why this factor contributes to risk."
+                }
+              }
+            }
+          },
+          "mitigationSuggestions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Suggested actions to reduce risk before proceeding (e.g., 'Schedule additional coaching session', 'Extend study plan by 1 week')."
+          },
+          "summary": {
+            "type": "string",
+            "description": "One-paragraph plain-language summary of the risk evaluation result for the manager review task."
+          }
+        }
+      },
+      "generatedAt": {
+        "type": "string",
+        "description": "ISO 8601 UTC timestamp of when the risk evaluation was generated. Format: YYYY-MM-DDTHH:mm:ssZ."
+      }
+    },
+    "required": [
+      "learnerId",
+      "certificationId",
+      "riskEvaluation",
+      "generatedAt"
+    ]
+  },
+  "metadata": {
+    "storageVersion": "50.0.0",
+    "isConversational": false,
+    "showProjectCreationExperience": false,
+    "targetRuntime": "pythonAgent"
+  },
+  "type": "lowCode",
+  "projectId": "db1512cc-4f60-4ca7-a444-6334b497e5d1",
+  "messages": [
+    {
+      "role": "system",
+      "content": "## Role\nYou are the Risk Agent, an AI specialist in evaluating learner risk for professional certification programs. Your responsibility is to analyze assessment results and study plan data to determine whether a learner is high-risk or low-risk, and produce a clear risk evaluation that drives the BPMN process routing decision.\n\n## Tool Rules\n- You have no external tools. Answer directly using your expertise in risk assessment and learning analytics.\n- Risk scoring must be based on three factors: (1) assessmentResult.overallReadinessScore (40%), (2) assessmentResult.estimatedPassProbability (35%), (3) study plan adequacy — dailyStudyHours and time to targetExamDate (25%).\n- riskLevel must be \"high\" if riskScore >= 50, otherwise \"low\".\n- isReady must be true only when riskLevel is \"low\" AND assessmentResult.readinessLevel is \"ready\" or \"partially-ready\" with riskScore < 40.\n\n## Work Steps\n1. Extract overallReadinessScore, estimatedPassProbability, and readinessLevel from assessmentResult.\n2. Evaluate study plan adequacy: check if dailyStudyHours >= 1.0 and if targetExamDate allows sufficient preparation time.\n3. Identify all risk factors present (e.g., low readiness score, weak topics, insufficient study time, unrealistic exam date, no prior certifications).\n4. Assign severity (high/medium/low) to each risk factor and compute a composite riskScore (0–100).\n5. Classify riskLevel: high if riskScore >= 50, low if riskScore < 50.\n6. Set isReady = true only if riskLevel is \"low\" AND readinessLevel is \"ready\" or \"partially-ready\" with riskScore < 40. Otherwise isReady = false.\n7. Generate 2–4 mitigation suggestions for high-risk learners to share with the manager.\n8. Write a concise one-paragraph summary suitable for the Manager Review task.\n9. Return the complete output as strict JSON matching the outputSchema exactly.\n\n## Output Rules\n- Return ONLY JSON that matches outputSchema exactly. No extra keys. No markdown. No extra text.\n- Always echo learnerId and certificationId from input.\n- riskLevel must be exactly \"high\" or \"low\".\n- isReady must be a boolean (true or false), never a string.\n- riskScore must be a number between 0 and 100.\n- generatedAt must be a valid ISO 8601 UTC timestamp.\n\n## Final Reminder\nAlways produce an honest, consistent JSON-only risk evaluation where riskLevel, riskScore, and isReady are logically aligned — this output directly controls the BPMN gateway routing.",
+      "contentTokens": [
+        {
+          "type": "simpleText",
+          "rawString": "## Role\nYou are the Risk Agent, an AI specialist in evaluating learner risk for professional certification programs. Your responsibility is to analyze assessment results and study plan data to determine whether a learner is high-risk or low-risk, and produce a clear risk evaluation that drives the BPMN process routing decision.\n\n## Tool Rules\n- You have no external tools. Answer directly using your expertise in risk assessment and learning analytics.\n- Risk scoring must be based on three factors: (1) assessmentResult.overallReadinessScore (40%), (2) assessmentResult.estimatedPassProbability (35%), (3) study plan adequacy — dailyStudyHours and time to targetExamDate (25%).\n- riskLevel must be \"high\" if riskScore >= 50, otherwise \"low\".\n- isReady must be true only when riskLevel is \"low\" AND assessmentResult.readinessLevel is \"ready\" or \"partially-ready\" with riskScore < 40.\n\n## Work Steps\n1. Extract overallReadinessScore, estimatedPassProbability, and readinessLevel from assessmentResult.\n2. Evaluate study plan adequacy: check if dailyStudyHours >= 1.0 and if targetExamDate allows sufficient preparation time.\n3. Identify all risk factors present (e.g., low readiness score, weak topics, insufficient study time, unrealistic exam date, no prior certifications).\n4. Assign severity (high/medium/low) to each risk factor and compute a composite riskScore (0–100).\n5. Classify riskLevel: high if riskScore >= 50, low if riskScore < 50.\n6. Set isReady = true only if riskLevel is \"low\" AND readinessLevel is \"ready\" or \"partially-ready\" with riskScore < 40. Otherwise isReady = false.\n7. Generate 2–4 mitigation suggestions for high-risk learners to share with the manager.\n8. Write a concise one-paragraph summary suitable for the Manager Review task.\n9. Return the complete output as strict JSON matching the outputSchema exactly.\n\n## Output Rules\n- Return ONLY JSON that matches outputSchema exactly. No extra keys. No markdown. No extra text.\n- Always echo learnerId and certificationId from input.\n- riskLevel must be exactly \"high\" or \"low\".\n- isReady must be a boolean (true or false), never a string.\n- riskScore must be a number between 0 and 100.\n- generatedAt must be a valid ISO 8601 UTC timestamp.\n\n## Final Reminder\nAlways produce an honest, consistent JSON-only risk evaluation where riskLevel, riskScore, and isReady are logically aligned — this output directly controls the BPMN gateway routing."
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": "Evaluate the certification risk level for the learner described below.\n\n## Inputs\n\n- Learner ID: <learner_id>{{learnerId}}</learner_id>\n- Certification ID: <certification_id>{{certificationId}}</certification_id>\n- Certification Name: <certification_name>{{certificationName}}</certification_name>\n- Learner Profile: <learner_profile>{{learnerProfile}}</learner_profile>\n- Assessment Result: <assessment_result>{{assessmentResult}}</assessment_result>\n- Study Plan: <study_plan>{{studyPlan}}</study_plan>\n\n## Steps\n\n1. Extract overallReadinessScore, estimatedPassProbability, and readinessLevel from assessmentResult.\n2. Evaluate study plan adequacy: check studyPlan.dailyStudyHours (risk if < 1.0 hr/day) and days remaining until studyPlan.targetExamDate (risk if < 14 days remaining).\n3. List all risk factors found with severity (high/medium/low) and a detail explanation.\n4. Compute riskScore (0–100) as weighted average: readiness (40%) + pass probability inverted (35%) + study plan gaps (25%).\n5. Classify riskLevel: \"high\" if riskScore >= 50, \"low\" if riskScore < 50.\n6. Set isReady = true ONLY if riskLevel is \"low\" AND readinessLevel is \"ready\" or \"partially-ready\" with riskScore < 40. Otherwise set isReady = false.\n7. Generate 2–4 mitigation suggestions for high-risk learners.\n8. Write a one-paragraph plain-language summary for the Manager Review task.\n9. Set generatedAt to the current UTC timestamp in ISO 8601 format.\n\n## Output Rules\n\n- Return ONLY valid JSON matching the outputSchema exactly. No markdown, no explanation, no extra text.\n- Echo learnerId and certificationId from input.\n- riskLevel must be exactly \"high\" or \"low\".\n- isReady must be a boolean — true or false, never a string.\n- riskScore must be between 0 and 100.",
+      "contentTokens": [
+        {
+          "type": "simpleText",
+          "rawString": "Evaluate the certification risk level for the learner described below.\n\n## Inputs\n\n- Learner ID: <learner_id>"
+        },
+        {
+          "type": "variable",
+          "rawString": "input.learnerId"
+        },
+        {
+          "type": "simpleText",
+          "rawString": "</learner_id>\n- Certification ID: <certification_id>"
+        },
+        {
+          "type": "variable",
+          "rawString": "input.certificationId"
+        },
+        {
+          "type": "simpleText",
+          "rawString": "</certification_id>\n- Certification Name: <certification_name>"
+        },
+        {
+          "type": "variable",
+          "rawString": "input.certificationName"
+        },
+        {
+          "type": "simpleText",
+          "rawString": "</certification_name>\n- Learner Profile: <learner_profile>"
+        },
+        {
+          "type": "variable",
+          "rawString": "input.learnerProfile"
+        },
+        {
+          "type": "simpleText",
+          "rawString": "</learner_profile>\n- Assessment Result: <assessment_result>"
+        },
+        {
+          "type": "variable",
+          "rawString": "input.assessmentResult"
+        },
+        {
+          "type": "simpleText",
+          "rawString": "</assessment_result>\n- Study Plan: <study_plan>"
+        },
+        {
+          "type": "variable",
+          "rawString": "input.studyPlan"
+        },
+        {
+          "type": "simpleText",
+          "rawString": "</study_plan>\n\n## Steps\n\n1. Extract overallReadinessScore, estimatedPassProbability, and readinessLevel from assessmentResult.\n2. Evaluate study plan adequacy: check studyPlan.dailyStudyHours (risk if < 1.0 hr/day) and days remaining until studyPlan.targetExamDate (risk if < 14 days remaining).\n3. List all risk factors found with severity (high/medium/low) and a detail explanation.\n4. Compute riskScore (0–100) as weighted average: readiness (40%) + pass probability inverted (35%) + study plan gaps (25%).\n5. Classify riskLevel: \"high\" if riskScore >= 50, \"low\" if riskScore < 50.\n6. Set isReady = true ONLY if riskLevel is \"low\" AND readinessLevel is \"ready\" or \"partially-ready\" with riskScore < 40. Otherwise set isReady = false.\n7. Generate 2–4 mitigation suggestions for high-risk learners.\n8. Write a one-paragraph plain-language summary for the Manager Review task.\n9. Set generatedAt to the current UTC timestamp in ISO 8601 format.\n\n## Output Rules\n\n- Return ONLY valid JSON matching the outputSchema exactly. No markdown, no explanation, no extra text.\n- Echo learnerId and certificationId from input.\n- riskLevel must be exactly \"high\" or \"low\".\n- isReady must be a boolean — true or false, never a string.\n- riskScore must be between 0 and 100."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "version": "1.0",
+  "id": "DefaultEvaluationSet",
+  "name": "Default Evaluation Set",
+  "evaluatorRefs": [
+    "DefaultContainsEvaluator"
+  ],
+  "evaluations": [
+    {
+      "id": "eval-001",
+      "name": "Sample Evaluation",
+      "inputs": {
+        "query": "Your input here"
+      },
+      "evaluationCriterias": {
+        "DefaultContainsEvaluator": null
+      }
+    }
+  ],
+  "fileName": "evaluation-set-default.json",
+  "updatedAt": "2026-06-27T23:41:34.447Z",
+  "selectedEntrypoint": "agent"
+}
